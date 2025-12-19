@@ -1,0 +1,47 @@
+name: Lab 1B Autograding
+
+on: [push]
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  autograding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout student code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build (30 marks)
+        id: build
+        uses: github-education-resources/autograding-command-grader@v1
+        with:
+          test-name: "Build"
+          command: mvn -q -DskipTests package
+          timeout: "10"
+          max-score: "30"
+
+      - name: Unit tests (60 marks)
+        id: tests
+        uses: github-education-resources/autograding-command-grader@v1
+        with:
+          test-name: "JUnit tests"
+          command: mvn -q test
+          timeout: "10"
+          max-score: "60"
+
+      - name: Report grade to Classroom
+        uses: github-education-resources/autograding-grading-reporter@v1
+        env:
+          BUILD_RESULTS: "${{ steps.build.outputs.result }}"
+          TESTS_RESULTS: "${{ steps.tests.outputs.result }}"
+        with:
+          runners: build,tests
